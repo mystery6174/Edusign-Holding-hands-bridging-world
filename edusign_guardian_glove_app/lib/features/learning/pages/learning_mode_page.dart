@@ -248,8 +248,8 @@ class SignVideoPlayer extends StatefulWidget {
 }
 
 class _SignVideoPlayerState extends State<SignVideoPlayer> {
-  late VideoPlayerController _controller;
-  bool _isInitialized = false;
+  late YoutubePlayerController _controller;
+  bool _isReady = false;
 
   @override
   void initState() {
