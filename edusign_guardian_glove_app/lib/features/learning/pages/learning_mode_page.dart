@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:edusign_guardian_glove_app/core/constants/app_colors.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:math';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 // --- DATA MODEL ---
 class LearningModule {
