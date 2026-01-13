@@ -151,7 +151,7 @@ class SettingsHubPage extends StatelessWidget {
               context,
               'Language Settings',
               Icons.language_outlined,
-              '/language', // String name
+              '/language', // <--- Change this to a STRING that matches your main.dart route
             ),
             _buildSettingTile(
               context,
