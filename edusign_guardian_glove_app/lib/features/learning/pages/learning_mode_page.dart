@@ -275,6 +275,9 @@ class _LearningModePageState extends State<LearningModePage> {
     );
   }}
 
+  @override
+  State<SignVideoPlayer> createState() => _SignVideoPlayerState();
+}
 
 class _SignVideoPlayerState extends State<SignVideoPlayer> {
   late VideoPlayerController _controller;
