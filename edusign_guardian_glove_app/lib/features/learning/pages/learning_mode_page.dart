@@ -282,10 +282,11 @@ class _SignVideoPlayerState extends State<SignVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized) return const Center(child: CircularProgressIndicator());
-    return AspectRatio(
-      aspectRatio: _controller.value.aspectRatio,
-      child: VideoPlayer(_controller),
+    return YoutubePlayer(
+      controller: _controller,
+      showVideoProgressIndicator: true,
+      progressIndicatorColor: AppColors.primaryTeal,
+      onReady: () => setState(() => _isReady = true),
     );
   }
 }
