@@ -24,10 +24,22 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize state with current user settings
-    _currentSignLanguage = widget.user.signLanguage;
-    _currentSpeechLanguage = widget.user.speechLanguage;
-  }
+
+    // --- FIX STARTS HERE ---
+
+    // 1. Check if the user's sign language exists in our list.
+    // If it's just "ISL", we map it to "ISL (Indian)" to prevent the crash.
+    String userSignLang = widget.user.signLanguage;
+    if (!_signLanguageOptions.contains(userSignLang)) {
+      // Logic: If user has "ISL", match it to "ISL (Indian)"
+      if (userSignLang == "ISL") {
+        _currentSignLanguage = 'ISL (Indian)';
+      } else {
+        _currentSignLanguage = _signLanguageOptions[0]; // Default to ASL if no match
+      }
+    } else {
+      _currentSignLanguage = userSignLang;
+    }
 
   void _saveLanguageChanges() {
     // In a real app, this would update the user profile in the database
