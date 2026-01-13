@@ -41,6 +41,16 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
       _currentSignLanguage = userSignLang;
     }
 
+    // 2. Do the same for Speech Language
+    String userSpeechLang = widget.user.speechLanguage;
+    if (!_speechLanguageOptions.contains(userSpeechLang)) {
+      _currentSpeechLanguage = _speechLanguageOptions[0]; // Default to English (US)
+    } else {
+      _currentSpeechLanguage = userSpeechLang;
+    }
+  }
+
+  // ... rest of your code ...
   void _saveLanguageChanges() {
     // In a real app, this would update the user profile in the database
     // and potentially trigger a command to the ESP32 to load a new ML model
