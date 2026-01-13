@@ -1,15 +1,23 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:edusign_guardian_glove_app/core/constants/app_colors.dart';
+import 'package:video_player/video_player.dart';
 import 'dart:math';
 
+// --- DATA MODEL ---
 class LearningModule {
   final String signName;
-  final String targetSign;
+  final String videoUrl;
   final int targetAccuracy;
 
-  const LearningModule(this.signName, this.targetSign, this.targetAccuracy);
+  const LearningModule({
+    required this.signName,
+    required this.videoUrl,
+    required this.targetAccuracy,
+  });
 }
 
+// --- MAIN PAGE ---
 class LearningModePage extends StatefulWidget {
   const LearningModePage({super.key});
 
@@ -20,69 +28,72 @@ class LearningModePage extends StatefulWidget {
 class _LearningModePageState extends State<LearningModePage> {
   final TextEditingController _searchController = TextEditingController();
 
-  final List<LearningModule> _learningModules = const [
-    LearningModule('Hello', 'ASL_HELLO_ANIM', 95),
-    LearningModule('Thank You', 'ISL_THANKS_ANIM', 90),
-    LearningModule('Help', 'BISL_HELP_ANIM', 85),
-    LearningModule('My Name', 'ASL_NAME_SEQ', 92),
-  ];
-
   LearningModule? _currentModule;
   double _currentAccuracy = 0.0;
-  String _feedbackMessage = 'Select a sign to begin.';
+  String _feedbackMessage = 'Search for a sign to start learning!';
+  bool _isLoading = false;
   bool _isPracticing = false;
 
   @override
   void initState() {
     super.initState();
-    _currentModule = _learningModules.first;
+    _searchSign('Hello');
   }
 
-  void _searchSign(String query) {
+  Future<void> _searchSign(String query) async {
     if (query.isEmpty) return;
-
-    final match = _learningModules.firstWhere(
-          (m) => m.signName.toLowerCase().contains(query.toLowerCase()),
-      orElse: () => _learningModules.first,
-    );
-
     setState(() {
-      _currentModule = match;
-      _feedbackMessage = 'Practice "${match.signName}" now!';
-      _currentAccuracy = 0.0;
-      _isPracticing = false;
+      _isLoading = true;
+      _feedbackMessage = 'Searching library...';
     });
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('learning_library')
+          .where('signName', isEqualTo: query.trim())
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        setState(() {
+          _currentModule = LearningModule(
+            signName: data['signName'] ?? 'Unknown',
+            videoUrl: data['videoUrl'] ?? '',
+            targetAccuracy: (data['targetAccuracy'] ?? 90).toInt(),
+          );
+          _feedbackMessage = 'Watch the video and try the sign!';
+          _currentAccuracy = 0.0;
+        });
+      } else {
+        setState(() {
+          _currentModule = null;
+          _feedbackMessage = 'Sorry, "$query" is not in our library yet.';
+        });
+      }
+    } catch (e) {
+      setState(() => _feedbackMessage = 'Database Error. Please try again.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _simulatePracticeAttempt() async {
     if (_currentModule == null) return;
-
     setState(() {
       _isPracticing = true;
       _feedbackMessage = 'Listening to glove...';
     });
 
     await Future.delayed(const Duration(milliseconds: 1500));
-
     final target = _currentModule!.targetAccuracy / 100;
     final random = Random();
-    double simulatedScore =
-    min(1.0, target * (0.8 + random.nextDouble() * 0.4));
-
-    final bool isCorrect = simulatedScore >= target;
+    double simulatedScore = min(1.0, target * (0.8 + random.nextDouble() * 0.4));
 
     setState(() {
       _currentAccuracy = simulatedScore;
       _isPracticing = false;
-
-      if (isCorrect) {
-        _feedbackMessage =
-        'Perfect! Confidence: ${(simulatedScore * 100).toInt()}%';
-        debugPrint('HAPTIC: SUCCESS');
-      } else {
-        _feedbackMessage = 'Try Again! Adjust hand position.';
-        debugPrint('HAPTIC: GUIDE');
-      }
+      _feedbackMessage = simulatedScore >= target ? 'Excellent work!' : 'Keep trying!';
     });
   }
 
@@ -90,26 +101,19 @@ class _LearningModePageState extends State<LearningModePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(
-        title: const Text('Learn & Practice'),
-        backgroundColor: AppColors.cardCanvas,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Learn & Practice'), backgroundColor: AppColors.cardCanvas, elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSearchBar(),
             const SizedBox(height: 30),
-            _currentModule != null
-                ? _buildLearningModuleCard(context, _currentModule!)
-                : Center(
-              child: Text(
-                _feedbackMessage,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else if (_currentModule != null)
+              _buildLearningModuleCard(context, _currentModule!)
+            else
+              Padding(padding: const EdgeInsets.only(top: 50), child: Text(_feedbackMessage)),
           ],
         ),
       ),
@@ -121,96 +125,44 @@ class _LearningModePageState extends State<LearningModePage> {
       controller: _searchController,
       onSubmitted: _searchSign,
       decoration: InputDecoration(
-        hintText: 'Type a word or sentence to learn...',
+        hintText: 'Search: Hello, Help...',
         prefixIcon: const Icon(Icons.search),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.send_outlined,
-              color: AppColors.primaryTeal),
-          onPressed: () => _searchSign(_searchController.text),
-        ),
         filled: true,
         fillColor: AppColors.cardCanvas,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
       ),
     );
   }
 
-  Widget _buildLearningModuleCard(
-      BuildContext context, LearningModule module) {
+  Widget _buildLearningModuleCard(BuildContext context, LearningModule module) {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.cardCanvas,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: AppColors.cardCanvas, borderRadius: BorderRadius.circular(16)),
       child: Column(
         children: [
-          Text(
-            module.signName,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(
-              color: AppColors.primaryTeal,
-              fontSize: 32,
-            ),
-          ),
-          Text('Target Accuracy: ${module.targetAccuracy}%'),
-          const SizedBox(height: 30),
+          Text(module.signName, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primaryTeal)),
+          const SizedBox(height: 20),
 
-          Container(
-            height: 200,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(12),
+          // VIDEO BLOCK
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: 220, width: double.infinity, color: Colors.black,
+              child: SignVideoPlayer(key: ValueKey(module.videoUrl), url: module.videoUrl),
             ),
-            child: Text(module.targetSign),
           ),
 
           const SizedBox(height: 30),
           _buildAccuracyMeter(context),
-          const SizedBox(height: 16),
-
-          Text(
-            _feedbackMessage,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: _currentAccuracy >= (module.targetAccuracy / 100)
-                  ? AppColors.primaryTeal
-                  : AppColors.secondaryGold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           const SizedBox(height: 30),
 
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed:
-              _isPracticing ? null : _simulatePracticeAttempt,
-              icon: _isPracticing
-                  ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-                  : const Icon(Icons.front_hand_outlined),
-              label:
-              Text(_isPracticing ? 'Translating...' : 'Try Sign Now'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryTeal,
-              ),
+              onPressed: _isPracticing ? null : _simulatePracticeAttempt,
+              icon: _isPracticing ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.front_hand_outlined),
+              label: Text(_isPracticing ? 'Processing...' : 'Try Sign Now'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryTeal),
             ),
           ),
         ],
@@ -224,46 +176,55 @@ class _LearningModePageState extends State<LearningModePage> {
         ? AppColors.primaryTeal
         : AppColors.secondaryGold;
 
-    return Column( // Changed to Column to separate the meter and the label
+    return Column(
       children: [
         SizedBox(
-          height: 160, // Increased size slightly to prevent cramming
-          width: 160,
+          height: 180, // Slightly taller container
+          width: 180,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Background Circle (Full track)
-              CircularProgressIndicator(
-                value: 1.0,
-                strokeWidth: 12,
-                color: AppColors.lightBackground,
+              // 1. Gray Background Track
+              SizedBox(
+                height: 150,
+                width: 150,
+                child: CircularProgressIndicator(
+                  value: 1.0,
+                  strokeWidth: 14,
+                  color: Colors.grey.withValues(alpha: 0.1),
+                ),
               ),
-              // The Actual Progress
-              CircularProgressIndicator(
-                value: _currentAccuracy,
-                strokeWidth: 12,
-                strokeCap: StrokeCap.round, // Makes the ends of the bar round and "Chic"
-                backgroundColor: Colors.transparent,
-                valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
+              // 2. The Actual Progress Bar
+              SizedBox(
+                height: 150,
+                width: 150,
+                child: CircularProgressIndicator(
+                  value: _currentAccuracy,
+                  strokeWidth: 14,
+                  strokeCap: StrokeCap.round, // Clean, rounded edges
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
+                ),
               ),
-              // The Percentage Text inside the circle
+              // 3. The Text Labels (Now perfectly centered)
               Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min, // Takes up only needed space
                 children: [
                   Text(
                     '${(_currentAccuracy * 100).toInt()}%',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontSize: 36, // Slightly smaller to prevent edge overlapping
+                    style: TextStyle(
+                      fontSize: 32, // Controlled size to prevent overlapping
                       fontWeight: FontWeight.bold,
                       color: indicatorColor,
                     ),
                   ),
                   Text(
-                    'Score',
+                    'ACCURACY',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
+                      letterSpacing: 1.2,
                       color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
