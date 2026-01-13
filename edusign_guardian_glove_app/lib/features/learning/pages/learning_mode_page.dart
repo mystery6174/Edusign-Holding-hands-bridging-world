@@ -271,6 +271,7 @@ class _SignVideoPlayerState extends State<SignVideoPlayer> {
           setState(() => _isReady = true);
         }
       });
+    }
   }
 
   @override
