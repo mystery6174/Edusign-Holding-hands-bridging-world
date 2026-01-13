@@ -273,7 +273,13 @@ class _LearningModePageState extends State<LearningModePage> {
         ),
       ],
     );
-  }}
+  }
+}
+
+// --- HELPER VIDEO WIDGET (Defined OUTSIDE the other classes) ---
+class SignVideoPlayer extends StatefulWidget {
+  final String url;
+  const SignVideoPlayer({super.key, required this.url});
 
   @override
   State<SignVideoPlayer> createState() => _SignVideoPlayerState();
