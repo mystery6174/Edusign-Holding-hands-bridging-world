@@ -13,7 +13,7 @@ class LanguageSettingsPage extends StatefulWidget {
 }
 
 class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
-  // --- DEMO DATA FOR LANGUAGE OPTIONS (Multi-Language Support) ---
+  // --- DEMO DATA ---
   final List<String> _signLanguageOptions = ['ASL (American)', 'ISL (Indian)', 'BISL (British)', 'LSF (French)'];
   final List<String> _speechLanguageOptions = ['English (US)', 'English (UK)', 'Hindi (India)', 'Marathi (India)', 'Spanish (Global)'];
 
