@@ -17,7 +17,6 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
   final List<String> _signLanguageOptions = ['ASL (American)', 'ISL (Indian)', 'BISL (British)', 'LSF (French)'];
   final List<String> _speechLanguageOptions = ['English (US)', 'English (UK)', 'Hindi (India)', 'Marathi (India)', 'Spanish (Global)'];
 
-  // --- STATE VARIABLES ---
   late String _currentSignLanguage;
   late String _currentSpeechLanguage;
 
