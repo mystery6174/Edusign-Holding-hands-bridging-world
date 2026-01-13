@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "205055323706",
+    "project_id": "edusign-gaurdian-glove",
+    "storage_bucket": "edusign-gaurdian-glove.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205055323706:android:d5e940caeaa92a76a14f03",
+        "android_client_info": {
+          "package_name": "com.example.edusign_guardian_glove_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWgwmRkMhdZ4yPGcO_A5q_AuBfvkOh4Ms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

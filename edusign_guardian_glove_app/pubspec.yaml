@@ -1,0 +1,54 @@
+name: edusign_guardian_glove_app
+description: A chic, minimalist, cross-platform app for real-time sign language translation and learning.
+publish_to: 'none' # Disables publishing for private applications
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.0.0
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.13.6
+  firebase_auth: ^4.15.3
+  # ----------------------------------
+  # CORE FUNCTIONALITY & HARDWARE (Required for USP)
+  # ----------------------------------
+
+  # Bluetooth Low Energy (for ESP32 Glove communication)
+  # NOTE: flutter_reactive_ble is chosen for its focus on reactivity and BLE.
+  flutter_reactive_ble: ^5.0.0
+
+  # Text-to-Speech (TTS) for the Live Translator output (Page 2)
+  flutter_tts: ^3.7.0
+
+  # State Management (Provider chosen for simplicity and global state like Theme/Glove Status)
+
+  # Local Database (for storing translation history, learning logs, and user profile updates)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0 # Uses Hive due to its speed and simplicity for local non-relational data
+
+  # ----------------------------------
+  # UI/UX & UTILITY
+  # ----------------------------------
+
+  # Icons
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+  # Hive Generator (Required to generate boilerplate code for Hive models)
+  build_runner: ^2.4.6
+  hive_generator: ^2.0.1
+
+# The flutter section is used to define assets and custom fonts.
+flutter:
+  uses-material-design: true
+
+  # We removed assets and fonts for now so the app can actually start.
+  # You can add them back once you download the .ttf files.
