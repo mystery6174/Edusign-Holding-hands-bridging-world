@@ -254,13 +254,21 @@ class _SignVideoPlayerState extends State<SignVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    // Initialize inside the correct state room
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() => _isInitialized = true);
-          _controller.setLooping(true);
-          _controller.play();
+    // This extracts the ID from a YouTube link automatically
+    final videoId = YoutubePlayer.convertUrlToId(widget.url);
+
+    if (videoId != null) {
+      _controller = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: const YoutubePlayerFlags(
+          autoPlay: true,
+          mute: false,
+          loop: true,
+          disableDragSeek: true, // Keeps user focused on the sign
+        ),
+      )..addListener(() {
+        if (mounted && _controller.value.isReady) {
+          setState(() => _isReady = true);
         }
       });
   }
