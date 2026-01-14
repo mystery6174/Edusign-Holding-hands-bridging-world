@@ -31,21 +31,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // --- UPDATED LOGIN LOGIC ---
-  void _login() async { // Add 'async'
+  bool _isLoading = false; // Add this to your State class
+
+  void _login() async {
+    setState(() => _isLoading = true); // Start Loading
+
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    // This should now recognize 'login'
     String? error = await userProvider.login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
 
-    if (error == null) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+    if (mounted) {
+      setState(() => _isLoading = false); // Stop Loading
+
+      if (error == null) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -136,9 +143,11 @@ class _LoginPageState extends State<LoginPage> {
                 // --- LOGIN BUTTON ---
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _login,
-                    child: const Text('Login'),
+                  child:ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Login'),
                   ),
                 ),
                 const SizedBox(height: 24),

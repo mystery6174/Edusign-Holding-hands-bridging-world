@@ -4,18 +4,25 @@ import 'package:edusign_guardian_glove_app/core/models/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProvider extends ChangeNotifier {
-  // Initialize with empty fields so .fullName doesn't return null
+  // --- ADD THESE VARIABLES ---
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+  // ---------------------------
+
   UserProfile _user = UserProfile(
     fullName: "Loading...",
     email: "",
     phoneNumber: "",
     dateOfBirth: "",
-    userId: "", // Use this as your "is data ready?" flag
+    userId: "",
     personalizedSigns: {},
   );
 
-  // ... rest of your code
-  // Firebase Instances
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -28,10 +35,7 @@ class UserProvider extends ChangeNotifier {
         DocumentSnapshot doc = await _db.collection('users').doc(firebaseUser.uid).get();
 
         if (doc.exists) {
-          // --- ADD THIS LINE BELOW ---
           Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-          // ----------------------------
-
           _user = UserProfile(
             fullName: data['fullName'] ?? 'User',
             email: data['email'] ?? firebaseUser.email,
@@ -42,7 +46,6 @@ class UserProvider extends ChangeNotifier {
           );
           notifyListeners();
         } else {
-          // If doc doesn't exist yet, we still set the ID to stop the spinner
           _user = UserProfile(
             fullName: "New User",
             email: firebaseUser.email ?? "",
@@ -59,17 +62,27 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  // --- LOGIN FUNCTION ---
+  // --- LOGIN FUNCTION (Now works with _setLoading) ---
   Future<String?> login(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      _setLoading(true);
 
-      // ADD THIS LINE: Fetch the actual profile data before telling the UI we are done
-      await fetchUserData();
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      notifyListeners();
+      _setLoading(false);
       return null;
     } catch (e) {
+      _setLoading(false);
+
+      // --- THE PIGEON FIX ---
+      if (e.toString().contains('PigeonUserDetails') || e.toString().contains('List<Object?>')) {
+        if (_auth.currentUser != null) {
+          return null;
+        }
+      }
       return e.toString();
     }
   }
@@ -77,20 +90,22 @@ class UserProvider extends ChangeNotifier {
   // --- SIGN UP FUNCTION ---
   Future<String?> signUp(String email, String password, String name) async {
     try {
+      _setLoading(true);
       UserCredential result = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password
       );
 
-      // Create the user profile in Firestore immediately after signup
       await _db.collection('users').doc(result.user!.uid).set({
         'fullName': name,
         'email': email,
         'createdAt': Timestamp.now(),
       });
 
+      _setLoading(false);
       return null;
     } catch (e) {
+      _setLoading(false);
       return e.toString();
     }
   }
@@ -112,7 +127,6 @@ class UserProvider extends ChangeNotifier {
     );
 
     try {
-      // Use the actual logged in user's ID if available, otherwise fallback to demo
       String uid = _auth.currentUser?.uid ?? 'demo_user_id';
 
       await _db.collection('users').doc(uid).set({
@@ -123,7 +137,6 @@ class UserProvider extends ChangeNotifier {
       }, SetOptions(merge: true));
 
       notifyListeners();
-      debugPrint("Cloud Sync Success");
     } catch (e) {
       debugPrint("Cloud Sync Error: $e");
     }

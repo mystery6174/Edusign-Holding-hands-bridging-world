@@ -1,45 +1,70 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:edusign_guardian_glove_app/core/constants/app_colors.dart';
-
-// Mock data structure to simulate learning sessions over several days
-class LearningSession {
-  final String date;
-  final double accuracy; // Percentage 0.0 to 1.0
-  final int signsPracticed;
-
-  const LearningSession(this.date, this.accuracy, this.signsPracticed);
-}
+import 'package:intl/intl.dart';
 
 class LearningDataPage extends StatelessWidget {
   const LearningDataPage({super.key});
 
-  // --- DEMO DATA: Simulating accuracy improvement over 5 sessions ---
-  final List<LearningSession> _learningHistory = const [
-    LearningSession('Nov 1', 0.65, 15), // Started low
-    LearningSession('Nov 3', 0.72, 20),
-    LearningSession('Nov 5', 0.81, 25),
-    LearningSession('Nov 7', 0.88, 30),
-    LearningSession('Nov 9', 0.94, 35), // Improved accuracy
-  ];
+  @override
+  Widget build(BuildContext context) {
+    // 1. Get the current logged-in user's ID to find their specific folder
+    final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.lightBackground,
-      padding: const EdgeInsets.only(top: 20, bottom: 8, left: 20),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.subtleText),
+    return Scaffold(
+      backgroundColor: AppColors.lightBackground,
+      appBar: AppBar(
+        title: const Text('My Learning Data'),
+        backgroundColor: AppColors.cardCanvas,
+        elevation: 0,
+      ),
+      // 2. Use StreamBuilder to listen to your new sub-collection
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('learning_sessions')
+            .orderBy('timestamp', descending: false) // Chart needs oldest to newest
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text("Something went wrong"));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal));
+          }
+
+          // 3. If the folder is empty (no sessions yet)
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return _buildEmptyState(context);
+          }
+
+          final docs = snapshot.data!.docs;
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(context, 'Progress Chart Over Time'),
+                _buildAccuracyChart(context, docs),
+                const SizedBox(height: 10),
+                _buildSectionHeader(context, 'Detailed Session History'),
+                _buildDetailedProgressList(context, docs.reversed.toList()), // List needs newest first
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  // --- CHART VISUALIZATION (Simulated using Container/Padding) ---
-  Widget _buildAccuracyChart(BuildContext context) {
-    // Finds the highest accuracy achieved for scaling the chart
-    final double maxAccuracy = _learningHistory
-        .map((session) => session.accuracy)
-        .reduce((a, b) => a > b ? a : b);
+  // --- CHART: Now pulls height from Firestore 'accuracy' field ---
+  Widget _buildAccuracyChart(BuildContext context, List<QueryDocumentSnapshot> docs) {
+    // Take only the last 7 sessions to keep the chart clean
+    final recentDocs = docs.length > 7 ? docs.sublist(docs.length - 7) : docs;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -52,124 +77,100 @@ class LearningDataPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Gesture Accuracy Rate',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          const Text('Gesture Accuracy Rate', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-
-          // Chart Drawing Area
-          Container(
+          SizedBox(
             height: 200,
-            width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.inputBorderLight)),
-            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: _learningHistory.map((session) {
-                // Bar height is proportional to max accuracy (max height is 180)
-                final double barHeight = (session.accuracy / maxAccuracy) * 180;
+              children: recentDocs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+
+                // --- SAFETY CHECK ---
+                double rawAccuracy = (data['accuracy'] ?? 0.0).toDouble();
+                // If data is stored as 85 or 100, convert it to 0.85 or 1.0
+                double accuracy = rawAccuracy > 1.0 ? rawAccuracy / 100 : rawAccuracy;
+
+                final Timestamp timestamp = data['timestamp'] ?? Timestamp.now();
+                final String dateLabel = DateFormat('MMM d').format(timestamp.toDate());
 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Accuracy Label
-                    Text('${(session.accuracy * 100).toInt()}%', style: TextStyle(
-                        color: AppColors.primaryTeal,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12
-                    )),
+                    Text('${(accuracy * 100).toInt()}%',
+                        style: const TextStyle(color: AppColors.primaryTeal, fontSize: 10)),
                     const SizedBox(height: 5),
-                    // Vertical Bar (The visual data point)
                     Container(
                       width: 25,
-                      height: barHeight,
+                      // CLAMP prevents overflow: min height 5, max height 150
+                      height: (accuracy * 150).clamp(5, 150).toDouble(),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryTeal.withOpacity(session.accuracy),
+                        color: AppColors.primaryTeal.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     const SizedBox(height: 5),
-                    // Date Label
-                    Text(session.date, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.subtleText)),
+                    Text(dateLabel, style: const TextStyle(fontSize: 10, color: AppColors.subtleText)),
                   ],
                 );
               }).toList(),
             ),
           ),
-
-          const SizedBox(height: 20),
-          Text('Note: Data shows continuous improvement since starting.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.subtleText)),
         ],
       ),
     );
   }
 
-  // --- DETAILED PROGRESS LIST ---
-  Widget _buildDetailedProgressList(BuildContext context) {
+  // --- LIST: Now pulls data from Firestore documents ---
+  Widget _buildDetailedProgressList(BuildContext context, List<QueryDocumentSnapshot> docs) {
     return Container(
       color: AppColors.cardCanvas,
       child: Column(
-        children: [
-          ..._learningHistory.reversed.map((session) {
-            return ListTile(
-              leading: Icon(Icons.check_circle_outline, color: AppColors.primaryTeal),
-              title: Text('Session on ${session.date}'),
-              subtitle: Text('${session.signsPracticed} unique signs practiced.'),
-              trailing: Chip(
-                label: Text('${(session.accuracy * 100).toInt()}% Accuracy'),
-                backgroundColor: AppColors.secondaryGold.withOpacity(0.1),
-                labelStyle: TextStyle(color: AppColors.secondaryGold, fontSize: 11),
-              ),
-            );
-          }).toList(),
-          const Divider(height: 1, indent: 20, endIndent: 20, color: AppColors.inputBorderLight),
-        ],
+        children: docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final double accuracy = (data['accuracy'] ?? 0.0).toDouble();
+          final Timestamp timestamp = data['timestamp'] ?? Timestamp.now();
+          final String dateLabel = DateFormat('MMM d').format(timestamp.toDate());
+
+          return ListTile(
+            leading: const Icon(Icons.check_circle_outline, color: AppColors.primaryTeal),
+            title: Text('Session on $dateLabel'),
+            subtitle: Text('${data['signsPracticed'] ?? 0} unique signs practiced.'),
+            trailing: Chip(
+              label: Text('${(accuracy * 100).toInt()}% Accuracy'),
+              backgroundColor: AppColors.secondaryGold.withOpacity(0.1),
+              labelStyle: const TextStyle(color: AppColors.secondaryGold, fontSize: 11),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(
-        title: const Text('My Learning Data'),
-        backgroundColor: AppColors.cardCanvas,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- 1. ACCURACY CHART ---
-            _buildSectionHeader(context, 'Progress Chart Over Time'),
-            _buildAccuracyChart(context),
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Container(
+      width: double.infinity,
+      color: AppColors.lightBackground,
+      padding: const EdgeInsets.only(top: 20, bottom: 8, left: 20),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.subtleText)),
+    );
+  }
 
-            const SizedBox(height: 10),
-
-            // --- 2. DETAILED SESSION LOG ---
-            _buildSectionHeader(context, 'Detailed Session History'),
-            _buildDetailedProgressList(context),
-
-            const SizedBox(height: 20),
-
-            // --- Call to Action ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/learning');
-                },
-                icon: const Icon(Icons.school_outlined),
-                label: const Text('Return to Practice'),
-              ),
-            ),
-          ],
-        ),
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.bar_chart, size: 80, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text("No practice sessions yet!", style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => Navigator.pushNamed(context, '/learning'),
+            child: const Text("Go Practice"),
+          )
+        ],
       ),
     );
   }

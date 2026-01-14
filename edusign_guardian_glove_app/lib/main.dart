@@ -19,7 +19,9 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'features/settings/pages/emergency_log_page.dart';
 import 'features/settings/pages/language_settings_page.dart';
-import 'features/settings/pages/personal_data_page.dart'; // Keep this
+import 'features/settings/pages/learning_data_page.dart';
+import 'features/settings/pages/personal_data_page.dart';
+import 'features/settings/pages/terms_conditions_page.dart'; // Keep this
 
 
 
@@ -84,6 +86,8 @@ class EduSignApp extends StatelessWidget {
               '/language': (context) => LanguageSettingsPage(
                   user: Provider.of<UserProvider>(context, listen: false).user
               ),
+              '/learning_data': (context) => const LearningDataPage(), // Check this!
+              '/terms': (context) => const TermsAndConditionsPage(),   // Check this!
               '/emergency_log': (context) => EmergencyLogPage(
                   user: Provider.of<UserProvider>(context, listen: false).user
               ),

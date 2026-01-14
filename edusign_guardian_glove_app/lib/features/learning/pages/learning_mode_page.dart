@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:edusign_guardian_glove_app/core/constants/app_colors.dart';
-import 'package:video_player/video_player.dart';
 import 'dart:math';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -39,6 +39,228 @@ class _LearningModePageState extends State<LearningModePage> {
   void initState() {
     super.initState();
     _searchSign('Hello');
+  }
+
+  // --- BULK UPLOAD FUNCTION (Inside State Class) ---
+ /* Future<void> bulkUploadSigns() async {
+    setState(() => _isLoading = true);
+    final List<Map<String, dynamic>> signs = [
+      {
+        "signName": "hello_i",
+        "videoUrl": "https://youtu.be/uKKvNqA9N20?si=uJrxP5uSZ_N9egi9",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "thank_you_i",
+        "videoUrl": "https://youtu.be/EPlhDhll9mw?si=PXF6OYtVxYl4441d",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "sorry_i",
+        "videoUrl": "https://youtube.com/shorts/vxcJmJmTb9I?si=EjlNAVuQPeZ2-RKo",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "yes_i",
+        "videoUrl": "https://youtube.com/shorts/8aqMnR3QXYU?si=p4Nw6ZCjpqV_Sma8",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "no_i",
+        "videoUrl": "https://youtube.com/shorts/8aqMnR3QXYU?si=p4Nw6ZCjpqV_Sma8",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "help_i",
+        "videoUrl": "https://youtube.com/shorts/HjzwQw8i2Vg?si=4xDWKXi98FJKjyXu",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "stop_i",
+        "videoUrl": "https://youtube.com/shorts/d2B7OzcSTQ4?si=QGwXJv8SbhnjdU1g",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "wait_i",
+        "videoUrl": "https://youtu.be/1SCyeB8o_wk?si=48w1iS8NRYAAytAL",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "work_i",
+        "videoUrl": "https://youtube.com/shorts/n5UtzRv5WE8?si=DyIXJlkBnhSKxbqu",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "finish_i",
+        "videoUrl": "https://youtube.com/shorts/tJ_suMaPCYA?si=ilPAM56MPDzUDJpR",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "understand_i",
+        "videoUrl": "https://youtube.com/shorts/RrAsItuHElQ?si=CJc4GdUZXKYqx3ON",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "home_i",
+        "videoUrl": "https://youtu.be/jcmkB3kkjL4?si=cLXpJNFbDAx-Q1NV",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "look_i",
+        "videoUrl": "https://youtu.be/aDgSTuibKtk?si=NVJbPeUM2wbMKRrP",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "listen_i",
+        "videoUrl": "https://youtube.com/shorts/WwZf2J0pZHA?si=AcvHCkSCYqBj_JFr",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "hello_a",
+        "videoUrl": "https://youtu.be/uKKvNqA9N20?si=wbh9YTbIeYCrk07P",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "thank_you_a",
+        "videoUrl": "https://youtube.com/shorts/Quvnp_ht00Y?si=ww6yOzzi2I7PgWvn",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "sorry_a",
+        "videoUrl": "https://youtube.com/shorts/icXgDdXbI6A?si=PexehFrNOnwfhLU7",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "please_a",
+        "videoUrl": "https://youtube.com/shorts/cet_luzygj0?si=iNSS098nMyOX4G_h",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "yes_a",
+        "videoUrl": "https://youtube.com/shorts/gNe-y4rifHM?si=5a5ra9Gmg5hBfbO-",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "no_a",
+        "videoUrl": "https://youtube.com/shorts/Kykb1u0En_Y?si=3r7C-FujFNtc8O6H",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "help_a",
+        "videoUrl": "https://youtube.com/shorts/2fF4FVH-2s8?si=h2_KSNYgbG3L4wQR",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "want_a",
+        "videoUrl": "https://youtube.com/shorts/Eh0-Whhb_Sc?si=T3PqUIBp95bjsfu0",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "need_a",
+        "videoUrl": "https://youtube.com/shorts/66X4jAqjBgQ?si=Fsbq27HzvMwxFkDZ",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "like_a",
+        "videoUrl": "https://youtube.com/shorts/8I7Oe2TJRIM?si=qrB6QyPTgdFot6wB",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "love_a",
+        "videoUrl": "https://youtube.com/shorts/VYsAmnsfDLI?si=-t2cVVynn7MdMjl9",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "dont_know_a",
+        "videoUrl": "https://youtube.com/shorts/3HTEtCVSPao?si=vP_i3MdNxP0SipUM",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "think_a",
+        "videoUrl": "https://youtube.com/shorts/m2orGL2VRGk?si=85llKmvQQRoKvYrW",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "see_a",
+        "videoUrl": "https://youtube.com/shorts/OyruhCX-iG0?si=lFmPHBHUat5eTZmv",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "ask_a",
+        "videoUrl": "https://youtube.com/shorts/uKghrgZ8EUI?si=7CWLbsNsT1H9l1dZ",
+        "targetAccuracy": 70
+      },
+      {
+        "signName": "finish_a",
+        "videoUrl": "https://youtube.com/shorts/e6yTO3lF_Uo?si=5KAmJEq8CRkRfG2i",
+        "targetAccuracy": 70
+      }
+    ];
+
+    try {
+      for (var sign in signs) {
+        await FirebaseFirestore.instance.collection('learning_library').add(sign);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("✅ Database Initialized!"), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      debugPrint("Upload Error: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+*/
+
+  // 1. Paste this function to handle the button click and logic
+  Future<void> _simulatePracticeAttempt() async {
+    if (_currentModule == null) return;
+
+    setState(() {
+      _isPracticing = true;
+      _feedbackMessage = 'Listening to glove...';
+    });
+
+    // Simulate waiting for glove data
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // Logic to generate a score
+    final target = _currentModule!.targetAccuracy / 100;
+    final random = Random();
+    double simulatedScore = min(1.0, target * (0.8 + random.nextDouble() * 0.4));
+
+    // Update the UI with the score
+    setState(() {
+      _currentAccuracy = simulatedScore;
+      _isPracticing = false;
+      _feedbackMessage = simulatedScore >= target ? 'Excellent work!' : 'Keep trying!';
+    });
+
+    // 2. TRIGGER SAVE: This sends the data to your 'learning_sessions' collection
+    await _recordRealPracticeSession(simulatedScore);
+  }
+
+  // 3. Make sure this matches your Firestore path from the screenshots
+  Future<void> _recordRealPracticeSession(double score) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('learning_sessions')
+          .add({
+        'timestamp': FieldValue.serverTimestamp(),
+        'accuracy': score, // 0.0 to 1.0
+        'signsPracticed': 1,
+      });
+      debugPrint("✅ Session saved successfully!");
+    } catch (e) {
+      debugPrint("❌ Error saving session: $e");
+    }
   }
 
   Future<void> _searchSign(String query) async {
@@ -79,35 +301,31 @@ class _LearningModePageState extends State<LearningModePage> {
     }
   }
 
-  Future<void> _simulatePracticeAttempt() async {
-    if (_currentModule == null) return;
-    setState(() {
-      _isPracticing = true;
-      _feedbackMessage = 'Listening to glove...';
-    });
-
-    await Future.delayed(const Duration(milliseconds: 1500));
-    final target = _currentModule!.targetAccuracy / 100;
-    final random = Random();
-    double simulatedScore = min(1.0, target * (0.8 + random.nextDouble() * 0.4));
-
-    setState(() {
-      _currentAccuracy = simulatedScore;
-      _isPracticing = false;
-      _feedbackMessage = simulatedScore >= target ? 'Excellent work!' : 'Keep trying!';
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(title: const Text('Learn & Practice'), backgroundColor: AppColors.cardCanvas, elevation: 0),
+      appBar: AppBar(
+          title: const Text('Learn & Practice'),
+          backgroundColor: AppColors.cardCanvas,
+          elevation: 0
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             _buildSearchBar(),
+
+            /* --- TEMPORARY UPLOAD BUTTON ---
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : bulkUploadSigns,
+              icon: const Icon(Icons.cloud_upload, color: Colors.white),
+              label: const Text("INITIALIZE DB", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            ),
+            */
+
             const SizedBox(height: 30),
             if (_isLoading)
               const CircularProgressIndicator()
@@ -143,8 +361,6 @@ class _LearningModePageState extends State<LearningModePage> {
         children: [
           Text(module.signName, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primaryTeal)),
           const SizedBox(height: 20),
-
-          // VIDEO BLOCK
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Container(
@@ -152,11 +368,9 @@ class _LearningModePageState extends State<LearningModePage> {
               child: SignVideoPlayer(key: ValueKey(module.videoUrl), url: module.videoUrl),
             ),
           ),
-
           const SizedBox(height: 30),
           _buildAccuracyMeter(context),
           const SizedBox(height: 30),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -173,61 +387,22 @@ class _LearningModePageState extends State<LearningModePage> {
 
   Widget _buildAccuracyMeter(BuildContext context) {
     final target = _currentModule!.targetAccuracy / 100;
-    final indicatorColor = _currentAccuracy >= target
-        ? AppColors.primaryTeal
-        : AppColors.secondaryGold;
+    final indicatorColor = _currentAccuracy >= target ? AppColors.primaryTeal : AppColors.secondaryGold;
 
     return Column(
       children: [
         SizedBox(
-          height: 180, // Slightly taller container
-          width: 180,
+          height: 180, width: 180,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // 1. Gray Background Track
-              SizedBox(
-                height: 150,
-                width: 150,
-                child: CircularProgressIndicator(
-                  value: 1.0,
-                  strokeWidth: 14,
-                  color: Colors.grey.withValues(alpha: 0.1),
-                ),
-              ),
-              // 2. The Actual Progress Bar
-              SizedBox(
-                height: 150,
-                width: 150,
-                child: CircularProgressIndicator(
-                  value: _currentAccuracy,
-                  strokeWidth: 14,
-                  strokeCap: StrokeCap.round, // Clean, rounded edges
-                  backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
-                ),
-              ),
-              // 3. The Text Labels (Now perfectly centered)
+              SizedBox(height: 150, width: 150, child: CircularProgressIndicator(value: 1.0, strokeWidth: 14, color: Colors.grey.withOpacity(0.1))),
+              SizedBox(height: 150, width: 150, child: CircularProgressIndicator(value: _currentAccuracy, strokeWidth: 14, strokeCap: StrokeCap.round, backgroundColor: Colors.transparent, valueColor: AlwaysStoppedAnimation<Color>(indicatorColor))),
               Column(
-                mainAxisSize: MainAxisSize.min, // Takes up only needed space
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '${(_currentAccuracy * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 32, // Controlled size to prevent overlapping
-                      fontWeight: FontWeight.bold,
-                      color: indicatorColor,
-                    ),
-                  ),
-                  Text(
-                    'ACCURACY',
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 1.2,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('${(_currentAccuracy * 100).toInt()}%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: indicatorColor)),
+                  const Text('ACCURACY', style: TextStyle(fontSize: 10, letterSpacing: 1.2, color: AppColors.subtleText, fontWeight: FontWeight.bold)),
                 ],
               ),
             ],
@@ -238,7 +413,6 @@ class _LearningModePageState extends State<LearningModePage> {
   }
 }
 
-// --- HELPER VIDEO WIDGET (Defined OUTSIDE the other classes) ---
 class SignVideoPlayer extends StatefulWidget {
   final String url;
   const SignVideoPlayer({super.key, required this.url});
@@ -248,45 +422,39 @@ class SignVideoPlayer extends StatefulWidget {
 }
 
 class _SignVideoPlayerState extends State<SignVideoPlayer> {
-  late YoutubePlayerController _controller;
-  bool _isReady = false;
+  YoutubePlayerController? _controller;
 
   @override
   void initState() {
     super.initState();
-    // This extracts the ID from a YouTube link automatically
-    final videoId = YoutubePlayer.convertUrlToId(widget.url);
+    _initializePlayer();
+  }
 
+  void _initializePlayer() {
+    final videoId = YoutubePlayer.convertUrlToId(widget.url);
     if (videoId != null) {
       _controller = YoutubePlayerController(
         initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
-          autoPlay: true,
-          mute: false,
-          loop: true,
-          disableDragSeek: true, // Keeps user focused on the sign
-        ),
-      )..addListener(() {
-        if (mounted && _controller.value.isReady) {
-          setState(() => _isReady = true);
-        }
-      });
+        flags: const YoutubePlayerFlags(autoPlay: true, mute: false, loop: true),
+      );
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_controller == null) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal));
+    }
     return YoutubePlayer(
-      controller: _controller,
+      controller: _controller!,
       showVideoProgressIndicator: true,
       progressIndicatorColor: AppColors.primaryTeal,
-      onReady: () => setState(() => _isReady = true),
     );
   }
 }

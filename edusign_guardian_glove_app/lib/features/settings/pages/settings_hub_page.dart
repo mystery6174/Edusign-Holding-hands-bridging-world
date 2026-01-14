@@ -15,14 +15,14 @@ import 'package:edusign_guardian_glove_app/features/auth/pages/login_page.dart';
 import '../../../core/providers/user_provider.dart';
 
 class SettingsHubPage extends StatelessWidget {
-  // We removed onThemeToggle and currentThemeMode because Provider handles them now
   const SettingsHubPage({super.key});
 
+  // Helper to build a clean tile
   Widget _buildSettingTile(
       BuildContext context,
       String title,
       IconData icon,
-      String routeName, // Change this from Widget to String
+      String routeName,
       ) {
     return Column(
       children: [
@@ -31,7 +31,8 @@ class SettingsHubPage extends StatelessWidget {
           title: Text(title),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
-            // Use the Route Name we defined in main.dart
+            // This is where the magic happens.
+            // It MUST match the key in your main.dart routes map.
             Navigator.pushNamed(context, routeName);
           },
         ),
@@ -77,22 +78,15 @@ class SettingsHubPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
-    // 1. Get the Provider
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
 
-    // 2. CRITICAL SAFETY CHECK:
-    // If the userId is empty, it means fetchUserData hasn't finished.
     if (user.userId.isEmpty) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primaryTeal),
-        ),
+        body: Center(child: CircularProgressIndicator(color: AppColors.primaryTeal)),
       );
     }
 
-    // 3. Only if user is NOT null/empty, show the actual UI
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -101,7 +95,7 @@ class SettingsHubPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // USER INFO SECTION - Now fully dynamic
+            // USER INFO SECTION
             Container(
               padding: const EdgeInsets.all(20),
               width: double.infinity,
@@ -109,35 +103,22 @@ class SettingsHubPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    user.fullName, // Displays updated name
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(user.fullName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(
-                    user.email, // Displays updated email
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
+                  Text(user.email, style: TextStyle(color: Colors.grey[600])),
                 ],
               ),
             ),
 
-            // THEME TOGGLE (Now fully functional!)
+            // THEME TOGGLE
             SwitchListTile(
               secondary: Icon(
-                themeProvider.themeMode == ThemeMode.dark
-                    ? Icons.dark_mode
-                    : Icons.light_mode,
+                themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
                 color: AppColors.primaryTeal,
               ),
               title: const Text('Dark Mode'),
               value: themeProvider.themeMode == ThemeMode.dark,
-              onChanged: (bool value) {
-                // 3. Call the toggle function in your Provider
-                themeProvider.toggleTheme(value);
-              },
+              onChanged: (bool value) => themeProvider.toggleTheme(value),
             ),
             const Divider(),
 
@@ -159,19 +140,19 @@ class SettingsHubPage extends StatelessWidget {
               Icons.security_outlined,
               '/emergency_log', // String name
             ),
+            // Change these two:
             _buildSettingTile(
               context,
               'Learning Data',
               Icons.trending_up_outlined,
-              '/LearningDataPage',
+              '/learning_data', // Changed from '/LearningDataPage'
             ),
             _buildSettingTile(
               context,
               'Terms & Conditions',
               Icons.description_outlined,
-              '/TermsAndConditionsPage',
+              '/terms', // Changed from '/TermsAndConditionsPage'
             ),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Log Out'),
